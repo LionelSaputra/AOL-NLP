@@ -1,0 +1,17 @@
+=============================================================
+  EVALUASI MODEL (LOGISTIC REGRESSION)
+=============================================================
+
+Akurasi Data Train : 93.53%
+Akurasi Data Test  : 89.94%
+
+Laporan Klasifikasi:
+-------------------------------------------------------
+              precision    recall  f1-score   support
+
+    negative       0.91      0.89      0.90      4940
+    positive       0.89      0.91      0.90      4977
+
+    accuracy                           0.90      9917
+   macro avg       0.90      0.90      0.90      9917
+weighted avg       0.90      0.90      0.90      9917

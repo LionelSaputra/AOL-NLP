@@ -1,0 +1,17 @@
+=============================================================
+  EVALUASI MODEL (NAIVE BAYES)
+=============================================================
+
+Akurasi Data Train : 90.19%
+Akurasi Data Test  : 87.87%
+
+Laporan Klasifikasi:
+-------------------------------------------------------
+              precision    recall  f1-score   support
+
+    negative       0.89      0.87      0.88      4940
+    positive       0.87      0.89      0.88      4977
+
+    accuracy                           0.88      9917
+   macro avg       0.88      0.88      0.88      9917
+weighted avg       0.88      0.88      0.88      9917
