@@ -1,0 +1,28 @@
+# Virtual Environment
+venv-bert/
+venv/
+.venv/
+env/
+ENV/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Large Model Weights (exceeding Git/GitHub 100MB limits or unnecessary)
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.h5
+*.ckpt
+
+# Output directories we want to keep reports, but ignore heavy outputs
+# (We will add the code/reports, but ignore temporary training state checkpoints if needed)
+# Since checkpoints are .pt, they are already ignored by *.pt above.
+
+# OS files
+.DS_Store
+Thumbs.db

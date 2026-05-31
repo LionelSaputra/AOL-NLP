@@ -1,0 +1,27 @@
+=============================================================
+  EVALUASI MODEL (LSTM Bidirectional - AMD GPU)
+=============================================================
+
+Waktu Training     : 137.93 menit
+Jumlah Epoch       : 4
+Batch Size         : 32
+Learning Rate      : 0.001
+Vocabulary Size    : 25,000
+Embedding Dim      : 128
+Hidden Dim         : 128
+LSTM Layers        : 2 (Bidirectional)
+Dropout            : 0.3
+Total Parameters   : 3,857,922
+
+Akurasi Data Test  : 86.82%
+
+Laporan Klasifikasi:
+-------------------------------------------------------
+              precision    recall  f1-score   support
+
+    negative       0.84      0.90      0.87      4940
+    positive       0.90      0.83      0.86      4977
+
+    accuracy                           0.87      9917
+   macro avg       0.87      0.87      0.87      9917
+weighted avg       0.87      0.87      0.87      9917

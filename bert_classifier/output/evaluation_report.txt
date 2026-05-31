@@ -1,0 +1,17 @@
+=============================================================
+  EVALUASI MODEL (DISTILBERT - AMD GPU)
+=============================================================
+
+Waktu Training     : 263.38 menit
+Akurasi Data Test  : 92.84%
+
+Laporan Klasifikasi:
+-------------------------------------------------------
+              precision    recall  f1-score   support
+
+    negative       0.93      0.93      0.93      4940
+    positive       0.93      0.93      0.93      4977
+
+    accuracy                           0.93      9917
+   macro avg       0.93      0.93      0.93      9917
+weighted avg       0.93      0.93      0.93      9917
