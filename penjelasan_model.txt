@@ -1,0 +1,115 @@
+=============================================================
+PENJELASAN MODEL SENTIMENT ANALYSIS (AOL NLP)
+=============================================================
+
+Tahapan pertama dalam pembuatan seluruh model ini adalah **Data Preprocessing Umum** yang dilakukan melalui *shared pipeline* (`data_preprocessing.py`). Proses ini dibagi menjadi dua bagian utama:
+
+**A. Pemuatan & Pembersihan Struktur Data:**
+1. **Load CSV**: Program otomatis mencari dan membaca file dataset `.csv` yang ada di dalam folder proyek secara dinamis.
+2. **Pembersihan Baris & Duplikat**: 
+   - Menghapus baris yang memiliki nilai kosong/hilang (**Remove NA/NaN** via `dropna()`).
+   - Menghapus baris ulasan yang duplikat (`drop_duplicates()`) untuk mencegah bias saat evaluasi.
+3. **Label Encoding**: Mengubah kategori sentimen teks (seperti "positive" dan "negative") menjadi nilai numerik biner (`0` dan `1`) menggunakan `LabelEncoder` agar bisa diproses sebagai target kelas oleh semua algoritma klasifikasi.
+
+**B. Pembersihan Konten Teks (Text Cleaning):**
+1. **Lowercasing**: Mengubah seluruh teks menjadi huruf kecil agar kata yang sama tidak dianggap berbeda hanya karena perbedaan kapitalisasi.
+2. **Contraction Expansion**: Mengubah bentuk singkatan umum ke kata aslinya (contoh: "can't" menjadi "cannot", "i'm" menjadi "i am").
+3. **Regex Cleaning**: Menghapus URL link, tag HTML (seperti `<br />`), mention (@), hashtag (#), serta membuang semua karakter non-alfabet (angka dan simbol).
+4. **Stopword Removal**: Menghapus kata umum/kata hubung yang tidak memiliki pengaruh kuat terhadap sentimen (seperti "the", "and", "is", "of").
+
+Setelah "teks bersih" dan label angka didapatkan, masing-masing model memiliki cara tersendiri untuk menerjemahkan teks menjadi angka (Feature Extraction/Tokenization). *(Catatan: Pengecualian khusus terjadi pada model DistilBERT yang sengaja melewati tahap "B. Pembersihan Konten Teks" ini dan langsung menggunakan teks mentah dari tahap "A" agar tidak kehilangan konteks tanda baca dan grammar).*
+
+Berikut rincian algoritma dan pengerjaan lanjutan dari setiap model:
+
+
+-------------------------------------------------------------
+1. MODEL NAIVE BAYES (MULTINOMIAL)
+-------------------------------------------------------------
+A. Data Preprocessing Lanjutan (Feature Extraction):
+Teks yang sudah bersih diubah menjadi representasi matriks menggunakan metode TF-IDF (Term Frequency-Inverse Document Frequency). TF-IDF menghitung seberapa sering sebuah kata muncul di sebuah kalimat, lalu menimbang balik bobotnya jika kata tersebut sangat umum muncul di seluruh kumpulan kalimat. Teks dipecah berdasarkan 1 kata hingga 2 kata berurutan (Unigram & Bigram) dengan maksimum 25.000 fitur.
+
+B. Cara Kerja dan Algoritma:
+Naive Bayes adalah algoritma machine learning berdasar probabilitas (Teorema Bayes). Asumsi utamanya bersifat "naif" atau mandiri (independen) yang menganggap kemunculan sebuah kata tidak ada hubungannya dengan posisi kata lain di kalimat tersebut. Model ini menghitung dan membandingkan peluang akhir — apakah sebuah kalimat memiliki probabilitas lebih besar masuk ke kelas Positif atau Negatif berdasarkan total probabilitas kata penyusunnya.
+
+C. Alasan Memilih Algoritma:
+- Sangat ringan, sangat cepat diproses, dan sangat efisien secara memori.
+- Sering digunakan sebagai model standar (*baseline*) di NLP dan umumnya bekerja sangat baik untuk teks sederhana berfrekuensi tinggi (seperti ulasan).
+
+D. Output / Hasil Evaluasi:
+- Akurasi Data Train : 90.19%
+- Akurasi Data Test  : 87.87%
+- Precision / Recall : ~0.88 untuk Positif dan Negatif
+- F1-Score           : 0.88
+- Kesimpulan Output  : Naive Bayes memberikan hasil yang sangat stabil dan bisa diandalkan tanpa ada indikasi overfit yang parah, berkat asumsi probabilistiknya yang sederhana.
+
+
+-------------------------------------------------------------
+2. MODEL LOGISTIC REGRESSION
+-------------------------------------------------------------
+A. Data Preprocessing Lanjutan (Feature Extraction):
+Sama persis dengan model Naive Bayes, model ini menggunakan TF-IDF Vectorizer untuk mengubah teks bersih menjadi vektor numerik matriks 25.000 dimensi yang mewakili bobot kata-kata.
+
+B. Cara Kerja dan Algoritma:
+Meski bernama "Regression", algoritma ini merupakan *Linear Classifier* (klasifikasi linier). Ia menghitung kombinasi linier antara *input feature* (bobot kata dari TF-IDF) dan bobot internal model yang dipelajari selama pelatihan. Penjumlahan ini kemudian dilewatkan ke sebuah fungsi aktivasi bernama *Sigmoid*, yang akan memampatkan nilai ke dalam rentang 0 sampai 1 (probabilitas). Nilai di atas 0.5 dihitung sebagai sentimen tertentu.
+
+C. Alasan Memilih Algoritma:
+- Jauh lebih kokoh daripada Naive Bayes karena tidak menganggap setiap kata "independen", melainkan mencari korelasi antar fitur secara matematis.
+- Sangat ideal dan efisien menangani data yang berdimensi besar dan sangat renggang (*sparse matrix* ciri khas TF-IDF).
+- Memiliki *interpretability* yang baik, sehingga bisa dilihat kata apa yang koefisiennya paling berpengaruh membuat teks jadi positif atau negatif.
+
+D. Output / Hasil Evaluasi:
+- Akurasi Data Train : 93.53%
+- Akurasi Data Test  : 89.94%
+- Precision / Recall : ~0.90
+- F1-Score           : 0.90
+- Kesimpulan Output  : Klasifikasi linier ini mengejutkan luar biasa baik, nyaris tembus 90% akurasi pada test set. Bukti bahwa dengan pre-processing dan TF-IDF yang baik, ML tradisional sanggup mengalahkan arsitektur deep learning murni pada dimensi tertentu.
+
+
+-------------------------------------------------------------
+3. MODEL LSTM (LONG SHORT-TERM MEMORY) BIDIRECTIONAL
+-------------------------------------------------------------
+A. Data Preprocessing Lanjutan (Tokenization & Padding):
+Alih-alih memakai TF-IDF (hitungan statistik), setiap kata unik dari "teks bersih" dicatat dalam Kamus (Vocabulary) menjadi urutan Indeks (misal kata "bagus" = indeks ke 4). Kumpulan kalimat diubah menjadi urutan *integer* berdasarkan posisinya. Jika terlalu pendek, akan ditambahi angka nol (Padding). Angka-angka posisi ini lalu direpresentasikan sebagai vektor spasial berkelanjutan pada layer `Embedding` berdimensi 128.
+
+B. Cara Kerja dan Algoritma:
+LSTM termasuk keluarga Recurrent Neural Network (RNN) yang bertugas membaca kalimat sesuai *urutan* kemunculannya. Di dalamnya ada struktur katup (*gates*) yang berfungsi mengatur seberapa banyak memori kata terdahulu harus disimpan atau dibuang saat bertemu kata yang baru. Untuk lebih menguatkan tangkapan pemahaman, model ini adalah "Bidirectional LSTM" (dilakukan 2 arah) di mana layer satu membaca dari kiri-ke-kanan, dan layer pasangannya membaca dari kanan-ke-kiri.
+
+C. Alasan Memilih Algoritma:
+- Bisa memahami "konteks" teks berdasarkan letak urutannya. Hal yang tidak bisa dicapai oleh TF-IDF sama sekali.
+- Menyelesaikan fenomena "Vanishing Gradient" pada teks yang kelewat panjang.
+- Implementasi murni jaringan saraf tiruan (Neural Network) *from scratch* yang diakselerasi via perangkat keras AMD Radeon GPU lewat teknologi DirectML (menggunakan arsitektur LSTM sel khusus buatan sendiri yang kompatibel dengan perhitungannya).
+
+D. Output / Hasil Evaluasi:
+- Waktu Training     : 137.93 menit (4 Epoch)
+- Akurasi Data Test  : 86.82%
+- Precision / Recall : Berada di kisaran 0.83 - 0.90
+- F1-Score           : 0.87
+- Kesimpulan Output  : Model baseline DL ini memiliki hasil yang oke, tetapi sedikit terkalahkan oleh akurasi Logistic Regression (86% berbanding 89%). Hal ini sangat lumrah karena melatih jaringan model dari *scratch* butuh puluhan juta dataset, sedangkan model ML konvensional seperti TF-IDF lebih efisien di kumpulan data menengan/kecil.
+
+
+-------------------------------------------------------------
+4. MODEL DISTILBERT (TRANSFORMER)
+-------------------------------------------------------------
+A. Data Preprocessing Lanjutan (Sub-Word Tokenization):
+Meski tetap memanggil *shared pipeline* untuk membaca dataset, DistilBERT **secara sengaja tidak memakai** teks yang sudah dibersihkan (`text_clean`). Ia justru mengambil teks asli/mentahnya secara langsung. Alasannya, model Transformer ini butuh melihat tanda baca, huruf besar/kecil, kata hubung (stopword), dan susunan aslinya untuk memahami konteks kalimat dengan tepat. Teks asli ini kemudian diproses oleh *Tokenizer* bawaan DistilBERT menjadi fragmen suku kata (WordPiece) untuk menghindari kata tak dikenal (Out-of-Vocabulary).
+
+B. Cara Kerja dan Algoritma:
+DistilBERT adalah arsitektur Transformer hasil "sulingan" dari model raksasa BERT. Transformer tak lagi membaca dari kiri ke kanan. Ia menggunakan *Self-Attention*, mekanisme yang menghitung tingkat kepentingan/fokus setiap kata terhadap SEMUA kata lain di dalam 1 kalimat secara berbarengan (*Global Bidirectional*). DistilBERT menggunakan metode *Transfer Learning* — model yang sudah cerdas pintar (paham bahasa inggris layaknya manusia lewat Wikipedia) di-*load*, kemudian cukup melakukan penyesuaian/latihan tipis (*Fine-tuning*) di lapisan puncaknya untuk menargetkan sentimen positif atau negatif.
+
+C. Alasan Memilih Algoritma:
+- Pendekatan "State-of-the-Art", teknologi mesin masa kini paling sakti di NLP untuk pemahaman semantik rumit, ironi, serta idiom bahasa.
+- Dipilih varian "Distil" yang 40% lebih kecil dibanding BERT asli namun menyimpan 97% kepintarannya. Sangat optimal untuk menghindari waktu training yang merugikan.
+
+D. Output / Hasil Evaluasi:
+- Waktu Training     : 263.38 menit (3 Epoch)
+- Akurasi Data Test  : 92.84%
+- Precision / Recall : 0.93 secara merata total
+- F1-Score           : 0.93
+- Kesimpulan Output  : Jelas menjadi model jawara di proyek ini. Dengan *pre-trained knowledge* yang dibawanya, akurasi hampir 93% menyapu bersih metrik dengan presisi mutlak ke setiap sudut klasifikasi sentimen positif maupun negatif. Waktu *training* paling lama, namun sepenuhnya terbayar oleh performanya.
+
+=============================================================
+KESIMPULAN PENJELASAN
+=============================================================
+Proyek ini membuktikan dua paradigma:
+1. Pendekatan Machine Learning tradisional (Naive Bayes, Logistic Regression) dengan TF-IDF bekerja dengan performa "sangat efektif dan cepat," di mana regresi logistik mengejutkan melampaui performa LSTM.
+2. Pendekatan Deep Learning Mutakhir (DistilBERT/Transformer) merajai akurasi dengan kekuatan *Transfer Learning* mengatasi bahasa yang kompleks, sementara LSTM mewakili teknik pembangunan "from scratch" pada urutan teks berakselerasi GPU AMD.
