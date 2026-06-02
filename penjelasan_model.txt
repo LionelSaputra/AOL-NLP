@@ -107,6 +107,13 @@ D. Output / Hasil Evaluasi:
 - F1-Score           : 0.93
 - Kesimpulan Output  : Jelas menjadi model jawara di proyek ini. Dengan *pre-trained knowledge* yang dibawanya, akurasi hampir 93% menyapu bersih metrik dengan presisi mutlak ke setiap sudut klasifikasi sentimen positif maupun negatif. Waktu *training* paling lama, namun sepenuhnya terbayar oleh performanya.
 
+E. Perbedaan Utama BERT vs DistilBERT:
+- **Jumlah Parameter & Ukuran**: BERT (base) memiliki sekitar 110 juta parameter, sedangkan DistilBERT memotongnya sekitar 40% menjadi hanya sekitar 66 juta parameter. Ukuran file model DistilBERT juga jauh lebih kecil dan lebih ringan.
+- **Arsitektur Layer**: DistilBERT memotong jumlah layer Transformer (encoder) menjadi setengahnya (dari 12 layer pada BERT base menjadi 6 layer).
+- **Metode Pelatihan**: BERT dilatih dari awal (*from scratch*), sedangkan DistilBERT dilatih menggunakan teknik **Knowledge Distillation** (Penyulingan Pengetahuan) di mana model BERT yang lebih besar bertindak sebagai *Teacher* (Guru) untuk melatih DistilBERT sebagai *Student* (Murid) agar meniru distribusi probabilitasnya.
+- **Kecepatan vs Performa**: DistilBERT berjalan sekitar 60% lebih cepat (baik saat pelatihan maupun inferensi) dibandingkan BERT, tetapi tetap berhasil mempertahankan sekitar 97% kemampuan pemahaman bahasa dari model BERT asli.
+- **Kebutuhan Resource**: DistilBERT jauh lebih hemat memori (RAM/GPU VRAM) sehingga sangat ideal untuk di-deploy pada lingkungan produksi dengan spesifikasi hardware yang lebih rendah atau terbatas.
+
 =============================================================
 KESIMPULAN PENJELASAN
 =============================================================
