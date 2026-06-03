@@ -337,11 +337,31 @@ def load_lstm_model():
 def load_distilbert_model():
     try:
         from transformers import AutoTokenizer, AutoModelForSequenceClassification
-        # Check if local model folder exists and contains configuration file
+        import urllib.request
+        import zipfile
+        
+        # Check if local model is missing and download from GitHub Release if possible
+        if not (BERT_MODEL_DIR / "config.json").exists():
+            zip_path = BASE_DIR / "bert_classifier" / "output" / "distilbert_saved_model.zip"
+            url = "https://github.com/LionelSaputra/AOL-NLP/releases/download/v1.0.0/distilbert_saved_model.zip"
+            try:
+                BERT_MODEL_DIR.parent.mkdir(exist_ok=True, parents=True)
+                urllib.request.urlretrieve(url, zip_path)
+                BERT_MODEL_DIR.mkdir(exist_ok=True)
+                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                    zip_ref.extractall(BERT_MODEL_DIR)
+                if zip_path.exists():
+                    zip_path.unlink()
+            except Exception:
+                if zip_path.exists():
+                    zip_path.unlink()
+                    
+        # Use local if available, otherwise fall back to Hugging Face Hub public model
         if BERT_MODEL_DIR.exists() and (BERT_MODEL_DIR / "config.json").exists():
             model_path = str(BERT_MODEL_DIR)
         else:
             model_path = "lvwerra/distilbert-imdb"
+            
         tokenizer = AutoTokenizer.from_pretrained(model_path)
         model = AutoModelForSequenceClassification.from_pretrained(model_path)
         model.eval()
