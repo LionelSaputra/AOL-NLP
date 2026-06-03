@@ -436,6 +436,18 @@ def predict_distilbert(text: str):
             pred_label = bert_model.config.id2label[pred_enc].lower()
         else:
             pred_label = classes_mapping[pred_enc]
+            
+        # Standardize labels to "negative" or "positive"
+        pred_label_lower = pred_label.lower()
+        if "label_0" in pred_label_lower or "neg" in pred_label_lower or pred_label_lower == "0":
+            pred_label = "negative"
+        elif "label_1" in pred_label_lower or "pos" in pred_label_lower or pred_label_lower == "1":
+            pred_label = "positive"
+            
+        # Fallback safeguard
+        if pred_label.lower() not in ["positive", "negative"]:
+            pred_label = classes_mapping[pred_enc]
+            
         return pred_label, confidence
 
 
