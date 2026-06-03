@@ -342,8 +342,12 @@ def load_distilbert_model():
         import urllib.request
         import zipfile
         
-        # Check if local model is missing and download from GitHub Release if possible
-        if not (BERT_MODEL_DIR / "config.json").exists():
+        # Check if local model weights or config are missing
+        has_weights = (BERT_MODEL_DIR / "model.safetensors").exists() or (BERT_MODEL_DIR / "pytorch_model.bin").exists()
+        has_config = (BERT_MODEL_DIR / "config.json").exists()
+        
+        # Download from GitHub Release if missing
+        if not (has_config and has_weights):
             zip_path = BASE_DIR / "bert_classifier" / "output" / "distilbert_saved_model.zip"
             url = "https://github.com/LionelSaputra/AOL-NLP/releases/download/v1.0.0/distilbert_saved_model.zip"
             try:
@@ -354,12 +358,15 @@ def load_distilbert_model():
                     zip_ref.extractall(BERT_MODEL_DIR)
                 if zip_path.exists():
                     zip_path.unlink()
+                # Re-evaluate file checks after extraction
+                has_weights = (BERT_MODEL_DIR / "model.safetensors").exists() or (BERT_MODEL_DIR / "pytorch_model.bin").exists()
+                has_config = (BERT_MODEL_DIR / "config.json").exists()
             except Exception:
                 if zip_path.exists():
                     zip_path.unlink()
                     
-        # Use local if available, otherwise fall back to Hugging Face Hub public model
-        if BERT_MODEL_DIR.exists() and (BERT_MODEL_DIR / "config.json").exists():
+        # Use local if fully available, otherwise fall back to Hugging Face Hub public model
+        if has_config and has_weights:
             model_path = str(BERT_MODEL_DIR)
         else:
             model_path = "lvwerra/distilbert-imdb"
@@ -486,6 +493,8 @@ if nb_err or lr_err or lstm_err or bert_err:
         st.markdown(f"- LSTM vocab: `{'✅' if LSTM_VOCAB_PATH.exists() else '❌'}`")
         st.markdown(f"- BERT dir: `{'✅' if BERT_MODEL_DIR.exists() else '❌'}`")
         st.markdown(f"- BERT config: `{'✅' if (BERT_MODEL_DIR / 'config.json').exists() else '❌'}`")
+        has_bert_weights = (BERT_MODEL_DIR / "model.safetensors").exists() or (BERT_MODEL_DIR / "pytorch_model.bin").exists()
+        st.markdown(f"- BERT weights: `{'✅' if has_bert_weights else '❌'}`")
         
         if lstm_err:
             st.error("LSTM Traceback:")
