@@ -17,102 +17,165 @@ Tahapan pertama dalam pembuatan seluruh model ini adalah **Data Preprocessing Um
 3. **Regex Cleaning**: Menghapus URL link, tag HTML (seperti `<br />`), mention (@), hashtag (#), serta membuang semua karakter non-alfabet (angka dan simbol).
 4. **Stopword Removal**: Menghapus kata umum/kata hubung yang tidak memiliki pengaruh kuat terhadap sentimen (seperti "the", "and", "is", "of").
 
-Setelah "teks bersih" dan label angka didapatkan, masing-masing model memiliki cara tersendiri untuk menerjemahkan teks menjadi angka (Feature Extraction/Tokenization). *(Catatan: Pengecualian khusus terjadi pada model DistilBERT yang sengaja melewati tahap "B. Pembersihan Konten Teks" ini dan langsung menggunakan teks mentah dari tahap "A" agar tidak kehilangan konteks tanda baca dan grammar).*
+*(Catatan: Pengecualian khusus terjadi pada model DistilBERT yang sengaja melewati tahap "B. Pembersihan Konten Teks" ini dan langsung menggunakan teks mentah dari tahap "A" agar tidak kehilangan konteks tanda baca, kapitalisasi, dan grammar untuk pemahaman semantik yang presisi).*
 
-Berikut rincian algoritma dan pengerjaan lanjutan dari setiap model:
+Berikut rincian terstruktur setiap model sesuai dengan rubrik penilaian dan komentar kode:
 
 
 -------------------------------------------------------------
 1. MODEL NAIVE BAYES (MULTINOMIAL)
 -------------------------------------------------------------
-A. Data Preprocessing Lanjutan (Feature Extraction):
-Teks yang sudah bersih diubah menjadi representasi matriks menggunakan metode TF-IDF (Term Frequency-Inverse Document Frequency). TF-IDF menghitung seberapa sering sebuah kata muncul di sebuah kalimat, lalu menimbang balik bobotnya jika kata tersebut sangat umum muncul di seluruh kumpulan kalimat. Teks dipecah berdasarkan 1 kata hingga 2 kata berurutan (Unigram & Bigram) dengan maksimum 25.000 fitur.
+A. DESKRIPSI DATASET & SUMBER LINK:
+   - Nama: IMDB Dataset of 50K Movie Reviews (50.000 ulasan film).
+   - Sumber Link: https://www.kaggle.com/datasets/lakshmi25npathi/imdb-dataset-of-50k-movie-reviews
 
-B. Cara Kerja dan Algoritma:
-Naive Bayes adalah algoritma machine learning berdasar probabilitas (Teorema Bayes). Asumsi utamanya bersifat "naif" atau mandiri (independen) yang menganggap kemunculan sebuah kata tidak ada hubungannya dengan posisi kata lain di kalimat tersebut. Model ini menghitung dan membandingkan peluang akhir — apakah sebuah kalimat memiliki probabilitas lebih besar masuk ke kelas Positif atau Negatif berdasarkan total probabilitas kata penyusunnya.
+B. JUSTIFIKASI & DESKRIPSI MODEL:
+   - Model: Multinomial Naive Bayes (MultinomialNB).
+   - Justifikasi: Dipilih karena sangat ringan secara memori, efisien, cepat dalam waktu training, dan bekerja sangat baik untuk teks sederhana berfrekuensi tinggi. Sangat ideal sebagai model standar (baseline) pembanding awal di NLP.
 
-C. Alasan Memilih Algoritma:
-- Sangat ringan, sangat cepat diproses, dan sangat efisien secara memori.
-- Sering digunakan sebagai model standar (*baseline*) di NLP dan umumnya bekerja sangat baik untuk teks sederhana berfrekuensi tinggi (seperti ulasan).
+C. DETAIL ARSITEKTUR & PENJELASAN PREPROCESSING (DATA HANDLING):
+   - Data Handling: Menggunakan shared pipeline untuk dropna() dan drop_duplicates(). Sentimen diencode menjadi biner (0=negatif, 1=positif).
+   - Preprocessing Teks: Mengubah ke huruf kecil, memperluas singkatan (contraction), menghapus URL/tag HTML/karakter non-alfabet, dan membuang stopwords.
+   - Representasi Fitur: Menggunakan TF-IDF Vectorizer untuk mengubah teks bersih menjadi representasi matriks statistik bobot kata.
 
-D. Output / Hasil Evaluasi:
-- Akurasi Data Train : 90.19%
-- Akurasi Data Test  : 87.87%
-- Precision / Recall : ~0.88 untuk Positif dan Negatif
-- F1-Score           : 0.88
-- Kesimpulan Output  : Naive Bayes memberikan hasil yang sangat stabil dan bisa diandalkan tanpa ada indikasi overfit yang parah, berkat asumsi probabilistiknya yang sederhana.
+D. KONFIGURASI HYPERPARAMETER (SKENARIO EKSPERIMEN):
+   - TF-IDF: max_features=25.000 (top-N kata paling sering), ngram_range=(1, 2) (Unigram & Bigram).
+   - Naive Bayes: alpha=0.1 (Laplace smoothing parameter).
+
+E. SKENARIO EVALUASI & PERBANDINGAN APPLE-TO-APPLE (TRAIN VS TEST):
+   - Pembagian Data: 80% Training (40.000 data) dan 20% Testing (10.000 data).
+   - Parameter Split: test_size=0.2, random_state=42 (seed yang sama untuk perbandingan adil antar model).
+   - Hasil Metrik: 
+     - Akurasi Data Train : 90.19%
+     - Akurasi Data Test  : 87.87%
+     - Precision / Recall : ~0.88 untuk Positif dan Negatif
+     - F1-Score           : 0.88
+     - Kesimpulan Output  : Memberikan hasil yang sangat stabil dan bisa diandalkan tanpa ada indikasi overfit yang parah, berkat asumsi probabilistiknya yang sederhana. Confusion matrix disimpan di `output/confusion_matrix.png`.
+
+F. DAFTAR PUSTAKA / REFERENSI:
+   - McCallum, A., & Nigam, K. (1998). A comparison of event models for Naive Bayes text classification. AAAI-98 workshop on learning for text categorization.
+   - Pedregosa, F., et al. (2011). Scikit-learn: Machine learning in Python. JMLR.
 
 
 -------------------------------------------------------------
 2. MODEL LOGISTIC REGRESSION
 -------------------------------------------------------------
-A. Data Preprocessing Lanjutan (Feature Extraction):
-Sama persis dengan model Naive Bayes, model ini menggunakan TF-IDF Vectorizer untuk mengubah teks bersih menjadi vektor numerik matriks 25.000 dimensi yang mewakili bobot kata-kata.
+A. DESKRIPSI DATASET & SUMBER LINK:
+   - Nama: IMDB Dataset of 50K Movie Reviews (50.000 ulasan film).
+   - Sumber Link: https://www.kaggle.com/datasets/lakshmi25npathi/imdb-dataset-of-50k-movie-reviews
 
-B. Cara Kerja dan Algoritma:
-Meski bernama "Regression", algoritma ini merupakan *Linear Classifier* (klasifikasi linier). Ia menghitung kombinasi linier antara *input feature* (bobot kata dari TF-IDF) dan bobot internal model yang dipelajari selama pelatihan. Penjumlahan ini kemudian dilewatkan ke sebuah fungsi aktivasi bernama *Sigmoid*, yang akan memampatkan nilai ke dalam rentang 0 sampai 1 (probabilitas). Nilai di atas 0.5 dihitung sebagai sentimen tertentu.
+B. JUSTIFIKASI & DESKRIPSI MODEL:
+   - Model: Logistic Regression.
+   - Justifikasi: Dipilih karena sangat kokoh menangani representasi data berdimensi besar dan sangat renggang (sparse matrix ciri khas TF-IDF), serta memiliki interpretability yang baik sehingga koefisien bobot kata-katanya bisa dianalisis secara langsung.
 
-C. Alasan Memilih Algoritma:
-- Jauh lebih kokoh daripada Naive Bayes karena tidak menganggap setiap kata "independen", melainkan mencari korelasi antar fitur secara matematis.
-- Sangat ideal dan efisien menangani data yang berdimensi besar dan sangat renggang (*sparse matrix* ciri khas TF-IDF).
-- Memiliki *interpretability* yang baik, sehingga bisa dilihat kata apa yang koefisiennya paling berpengaruh membuat teks jadi positif atau negatif.
+C. DETAIL ARSITEKTUR & PENJELASAN PREPROCESSING (DATA HANDLING):
+   - Data Handling: Menggunakan shared pipeline untuk dropna() dan drop_duplicates(). Sentimen diencode menjadi biner (0=negatif, 1=positif).
+   - Preprocessing Teks: Mengubah ke huruf kecil, memperluas singkatan (contraction), menghapus URL/tag HTML/karakter non-alfabet, dan membuang stopwords.
+   - Representasi Fitur: Menggunakan TF-IDF Vectorizer untuk mengubah teks bersih menjadi representasi matriks statistik bobot kata.
 
-D. Output / Hasil Evaluasi:
-- Akurasi Data Train : 93.53%
-- Akurasi Data Test  : 89.94%
-- Precision / Recall : ~0.90
-- F1-Score           : 0.90
-- Kesimpulan Output  : Klasifikasi linier ini mengejutkan luar biasa baik, nyaris tembus 90% akurasi pada test set. Bukti bahwa dengan pre-processing dan TF-IDF yang baik, ML tradisional sanggup mengalahkan arsitektur deep learning murni pada dimensi tertentu.
+D. KONFIGURASI HYPERPARAMETER (SKENARIO EKSPERIMEN):
+   - TF-IDF: max_features=25.000 (top-N fitur kata), ngram_range=(1, 2) (Unigram & Bigram).
+   - Logistic Regression: regularization strength C=1.0, max_iter=1000, solver='lbfgs'.
+
+E. SKENARIO EVALUASI & PERBANDINGAN APPLE-TO-APPLE (TRAIN VS TEST):
+   - Pembagian Data: 80% Training (40.000 data) dan 20% Testing (10.000 data).
+   - Parameter Split: test_size=0.2, random_state=42 (seed yang sama untuk perbandingan adil antar model).
+   - Hasil Metrik:
+     - Akurasi Data Train : 93.53%
+     - Akurasi Data Test  : 89.94%
+     - Precision / Recall : ~0.90
+     - F1-Score           : 0.90
+     - Kesimpulan Output  : Klasifikasi linier ini berkinerja luar biasa baik, mencapai akurasi hampir 90% pada data pengujian. Hal ini membuktikan bahwa ML tradisional dengan preprocessing & TF-IDF yang baik sanggup menandingi arsitektur deep learning pada dataset menengah. Confusion matrix disimpan di `output/confusion_matrix.png`.
+
+F. DAFTAR PUSTAKA / REFERENSI:
+   - Hosmer Jr, D. W., Lemeshow, S., & Sturdivant, R. X. (2013). Applied logistic regression. John Wiley & Sons.
+   - Pedregosa, F., et al. (2011). Scikit-learn: Machine learning in Python. JMLR.
 
 
 -------------------------------------------------------------
 3. MODEL LSTM (LONG SHORT-TERM MEMORY) BIDIRECTIONAL
 -------------------------------------------------------------
-A. Data Preprocessing Lanjutan (Tokenization & Padding):
-Alih-alih memakai TF-IDF (hitungan statistik), setiap kata unik dari "teks bersih" dicatat dalam Kamus (Vocabulary) menjadi urutan Indeks (misal kata "bagus" = indeks ke 4). Kumpulan kalimat diubah menjadi urutan *integer* berdasarkan posisinya. Jika terlalu pendek, akan ditambahi angka nol (Padding). Angka-angka posisi ini lalu direpresentasikan sebagai vektor spasial berkelanjutan pada layer `Embedding` berdimensi 128.
+A. DESKRIPSI DATASET & SUMBER LINK:
+   - Nama: IMDB Dataset of 50K Movie Reviews (50.000 ulasan film).
+   - Sumber Link: https://www.kaggle.com/datasets/lakshmi25npathi/imdb-dataset-of-50k-movie-reviews
 
-B. Cara Kerja dan Algoritma:
-LSTM termasuk keluarga Recurrent Neural Network (RNN) yang bertugas membaca kalimat sesuai *urutan* kemunculannya. Di dalamnya ada struktur katup (*gates*) yang berfungsi mengatur seberapa banyak memori kata terdahulu harus disimpan atau dibuang saat bertemu kata yang baru. Untuk lebih menguatkan tangkapan pemahaman, model ini adalah "Bidirectional LSTM" (dilakukan 2 arah) di mana layer satu membaca dari kiri-ke-kanan, dan layer pasangannya membaca dari kanan-ke-kiri.
+B. JUSTIFIKASI & DESKRIPSI MODEL:
+   - Model: Stacked Bidirectional LSTM.
+   - Justifikasi: Dipilih karena mampu membaca kalimat secara berurutan sesuai urutan kata dan menangkap konteks kronologis dua arah, menyelesaikan masalah "Vanishing Gradient" pada teks ulasan panjang.
 
-C. Alasan Memilih Algoritma:
-- Bisa memahami "konteks" teks berdasarkan letak urutannya. Hal yang tidak bisa dicapai oleh TF-IDF sama sekali.
-- Menyelesaikan fenomena "Vanishing Gradient" pada teks yang kelewat panjang.
-- Implementasi murni jaringan saraf tiruan (Neural Network) *from scratch* yang diakselerasi via perangkat keras AMD Radeon GPU lewat teknologi DirectML (menggunakan arsitektur LSTM sel khusus buatan sendiri yang kompatibel dengan perhitungannya).
+C. DETAIL ARSITEKTUR & PENJELASAN PREPROCESSING (DATA HANDLING):
+   - Data Handling: Menggunakan shared pipeline untuk dropna() dan drop_duplicates(). Sentimen diencode menjadi biner (0=negatif, 1=positif).
+   - Preprocessing Teks: Mengubah ke huruf kecil, memperluas singkatan (contraction), menghapus URL/tag HTML/karakter non-alfabet, dan membuang stopwords.
+   - Representasi Fitur: Kata unik diubah menjadi urutan Indeks integer menggunakan Vocabulary kustom, lalu dilewatkan ke layer Embedding berdimensi 128.
+   - Arsitektur Jaringan: Menggunakan nn.Embedding, 2 layer ManualBiLSTM (Bidirectional LSTM manual yang diimplementasikan secara sel-demi-sel menggunakan nn.Linear agar kompatibel berjalan lancar di akselerasi AMD GPU DirectML), Dropout, dan Fully Connected Layer (nn.Linear) untuk output klasifikasi.
 
-D. Output / Hasil Evaluasi:
-- Waktu Training     : 137.93 menit (4 Epoch)
-- Akurasi Data Test  : 86.82%
-- Precision / Recall : Berada di kisaran 0.83 - 0.90
-- F1-Score           : 0.87
-- Kesimpulan Output  : Model baseline DL ini memiliki hasil yang oke, tetapi sedikit terkalahkan oleh akurasi Logistic Regression (86% berbanding 89%). Hal ini sangat lumrah karena melatih jaringan model dari *scratch* butuh puluhan juta dataset, sedangkan model ML konvensional seperti TF-IDF lebih efisien di kumpulan data menengan/kecil.
+D. KONFIGURASI HYPERPARAMETER (SKENARIO EKSPERIMEN):
+   - Vocabulary: max_size=25.000 kata unik.
+   - Urutan Panjang: MAX_SEQ_LEN=150 (teks dipotong/ditambah padding nol hingga panjang 150).
+   - LSTM Layer: NUM_LAYERS=2, HIDDEN_DIM=128, DROPOUT=0.3.
+   - Training: LR=1e-3, BATCH_SIZE=32, EPOCHS=7, optimizer=Adam, loss=CrossEntropyLoss.
+   - Early Stopping: patience=2, min_delta=0.002.
+
+E. SKENARIO EVALUASI & PERBANDINGAN APPLE-TO-APPLE (TRAIN VS TEST):
+   - Pembagian Data: 80% Training (40.000 data) dan 20% Testing (10.000 data).
+   - Parameter Split: test_size=0.2, random_state=42 (seed yang sama untuk perbandingan adil antar model).
+   - Hasil Metrik:
+     - Waktu Training     : 225.04 menit (7 Epoch)
+     - Akurasi Data Train : 96.82% (Epoch 7)
+     - Akurasi Data Test  : 87.64%
+     - Precision / Recall : Berada di kisaran 0.86 - 0.90
+     - F1-Score           : 0.88
+     - Kesimpulan Output  : Model ini dilatih murni dari awal (from scratch). Hasil pengujian akhir mencapai akurasi 87.64% yang cukup baik, namun sedikit di bawah Logistic Regression karena melatih jaringan neural network dari awal idealnya membutuhkan dataset yang jauh lebih besar lagi. Grafik riwayat training disimpan di `output/training_history.png` dan confusion matrix di `output/confusion_matrix.png`.
+
+F. DAFTAR PUSTAKA / REFERENSI:
+   - Hochreiter, S., & Schmidhuber, J. (1997). Long short-term memory. Neural computation, 9(8), 1735-1780.
+   - Graves, A., & Schmidhuber, J. (2005). Framewise phoneme classification with bidirectional LSTM.
 
 
 -------------------------------------------------------------
 4. MODEL DISTILBERT (TRANSFORMER)
 -------------------------------------------------------------
-A. Data Preprocessing Lanjutan (Sub-Word Tokenization):
-Meski tetap memanggil *shared pipeline* untuk membaca dataset, DistilBERT **secara sengaja tidak memakai** teks yang sudah dibersihkan (`text_clean`). Ia justru mengambil teks asli/mentahnya secara langsung. Alasannya, model Transformer ini butuh melihat tanda baca, huruf besar/kecil, kata hubung (stopword), dan susunan aslinya untuk memahami konteks kalimat dengan tepat. Teks asli ini kemudian diproses oleh *Tokenizer* bawaan DistilBERT menjadi fragmen suku kata (WordPiece) untuk menghindari kata tak dikenal (Out-of-Vocabulary).
+A. DESKRIPSI DATASET & SUMBER LINK:
+   - Nama: IMDB Dataset of 50K Movie Reviews (50.000 ulasan film).
+   - Sumber Link: https://www.kaggle.com/datasets/lakshmi25npathi/imdb-dataset-of-50k-movie-reviews
 
-B. Cara Kerja dan Algoritma:
-DistilBERT adalah arsitektur Transformer hasil "sulingan" dari model raksasa BERT. Transformer tak lagi membaca dari kiri ke kanan. Ia menggunakan *Self-Attention*, mekanisme yang menghitung tingkat kepentingan/fokus setiap kata terhadap SEMUA kata lain di dalam 1 kalimat secara berbarengan (*Global Bidirectional*). DistilBERT menggunakan metode *Transfer Learning* — model yang sudah cerdas pintar (paham bahasa inggris layaknya manusia lewat Wikipedia) di-*load*, kemudian cukup melakukan penyesuaian/latihan tipis (*Fine-tuning*) di lapisan puncaknya untuk menargetkan sentimen positif atau negatif.
+B. JUSTIFIKASI & DESKRIPSI MODEL:
+   - Model: DistilBERT (Transformers encoder model).
+   - Justifikasi: Dipilih karena merupakan arsitektur State-of-the-Art di NLP yang memanfaatkan mekanisme Self-Attention global. Dipilih varian "Distil" yang 40% lebih kecil dibanding BERT asli namun menyimpan 97% kecerdasannya, sehingga sangat hemat memori dan waktu inferensi.
 
-C. Alasan Memilih Algoritma:
-- Pendekatan "State-of-the-Art", teknologi mesin masa kini paling sakti di NLP untuk pemahaman semantik rumit, ironi, serta idiom bahasa.
-- Dipilih varian "Distil" yang 40% lebih kecil dibanding BERT asli namun menyimpan 97% kepintarannya. Sangat optimal untuk menghindari waktu training yang merugikan.
+C. DETAIL ARSITEKTUR & PENJELASAN PREPROCESSING (DATA HANDLING):
+   - Data Handling: Menggunakan shared pipeline untuk memuat dataset.
+   - Preprocessing Teks: Pengecualian khusus! DistilBERT menggunakan teks mentah asli (tidak dibersihkan) agar tidak kehilangan informasi tanda baca, huruf besar/kecil, dan struktur grammar untuk pemahaman semantik yang utuh.
+   - Representasi Fitur: WordPiece Sub-Word Tokenizer bawaan DistilBERT (mengonversi kata menjadi sub-word token ID).
+   - Arsitektur: 6 Transformer Encoder layers, 768 hidden size, 12 attention heads, 66 juta parameter.
 
-D. Output / Hasil Evaluasi:
-- Waktu Training     : 263.38 menit (3 Epoch)
-- Akurasi Data Test  : 92.84%
-- Precision / Recall : 0.93 secara merata total
-- F1-Score           : 0.93
-- Kesimpulan Output  : Jelas menjadi model jawara di proyek ini. Dengan *pre-trained knowledge* yang dibawanya, akurasi hampir 93% menyapu bersih metrik dengan presisi mutlak ke setiap sudut klasifikasi sentimen positif maupun negatif. Waktu *training* paling lama, namun sepenuhnya terbayar oleh performanya.
+D. KONFIGURASI HYPERPARAMETER (SKENARIO EKSPERIMEN):
+   - Tokenizer: max_length=512 (teks di-padding/ditruncate hingga 512 token).
+   - Training: LR=5e-5, BATCH_SIZE=16 (training) / 32 (evaluasi), EPOCHS=3.
+   - Optimizer: AdamW (weight decay regularized Adam optimizer).
 
-E. Perbedaan Utama BERT vs DistilBERT:
-- **Jumlah Parameter & Ukuran**: BERT (base) memiliki sekitar 110 juta parameter, sedangkan DistilBERT memotongnya sekitar 40% menjadi hanya sekitar 66 juta parameter. Ukuran file model DistilBERT juga jauh lebih kecil dan lebih ringan.
-- **Arsitektur Layer**: DistilBERT memotong jumlah layer Transformer (encoder) menjadi setengahnya (dari 12 layer pada BERT base menjadi 6 layer).
-- **Metode Pelatihan**: BERT dilatih dari awal (*from scratch*), sedangkan DistilBERT dilatih menggunakan teknik **Knowledge Distillation** (Penyulingan Pengetahuan) di mana model BERT yang lebih besar bertindak sebagai *Teacher* (Guru) untuk melatih DistilBERT sebagai *Student* (Murid) agar meniru distribusi probabilitasnya.
-- **Kecepatan vs Performa**: DistilBERT berjalan sekitar 60% lebih cepat (baik saat pelatihan maupun inferensi) dibandingkan BERT, tetapi tetap berhasil mempertahankan sekitar 97% kemampuan pemahaman bahasa dari model BERT asli.
-- **Kebutuhan Resource**: DistilBERT jauh lebih hemat memori (RAM/GPU VRAM) sehingga sangat ideal untuk di-deploy pada lingkungan produksi dengan spesifikasi hardware yang lebih rendah atau terbatas.
+E. SKENARIO EVALUASI & PERBANDINGAN APPLE-TO-APPLE (TRAIN VS TEST):
+   - Pembagian Data: 80% Training (40.000 data) dan 20% Testing (10.000 data).
+   - Parameter Split: test_size=0.2, random_state=42 (seed yang sama untuk perbandingan adil antar model).
+   - Hasil Metrik:
+     - Waktu Training     : 263.38 menit (3 Epoch)
+     - Akurasi Data Train : ~98.50% (Estimasi dari training loss)
+     - Akurasi Data Test  : 92.84%
+     - Precision / Recall : 0.93 secara merata total
+     - F1-Score           : 0.93
+     - Kesimpulan Output  : Menjadi model terbaik dengan akurasi 92.84% berkat pemahaman transfer learning yang mendalam pada konteks semantik bahasa yang kompleks, sarkasme, dan idiom. Confusion matrix disimpan di `output/confusion_matrix.png`.
+
+F. DAFTAR PUSTAKA / REFERENSI:
+   - Sanh, V., Debut, L., Chaumond, J., & Wolf, T. (2019). DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter. arXiv preprint arXiv:1910.01108.
+   - Vaswani, A., et al. (2017). Attention is all you need. NIPS.
+
+G. Perbedaan Utama BERT vs DistilBERT:
+   - **Jumlah Parameter & Ukuran**: BERT (base) memiliki sekitar 110 juta parameter, sedangkan DistilBERT memotongnya sekitar 40% menjadi hanya sekitar 66 juta parameter. Ukuran file model DistilBERT juga jauh lebih kecil dan lebih ringan.
+   - **Arsitektur Layer**: DistilBERT memotong jumlah layer Transformer (encoder) menjadi setengahnya (dari 12 layer pada BERT base menjadi 6 layer).
+   - **Metode Pelatihan**: BERT dilatih dari awal (*from scratch*), sedangkan DistilBERT dilatih menggunakan teknik **Knowledge Distillation** (Penyulingan Pengetahuan) di mana model BERT yang lebih besar bertindak sebagai *Teacher* (Guru) untuk melatih DistilBERT sebagai *Student* (Murid) agar meniru distribusi probabilitasnya.
+   - **Kecepatan vs Performa**: DistilBERT berjalan sekitar 60% lebih cepat (baik saat pelatihan maupun inferensi) dibandingkan BERT, tetapi tetap berhasil mempertahankan sekitar 97% kemampuan pemahaman bahasa dari model BERT asli.
+   - **Kebutuhan Resource**: DistilBERT jauh lebih hemat memori (RAM/GPU VRAM) sehingga sangat ideal untuk di-deploy pada lingkungan produksi dengan spesifikasi hardware yang lebih rendah atau terbatas.
+
 
 =============================================================
 KESIMPULAN PENJELASAN

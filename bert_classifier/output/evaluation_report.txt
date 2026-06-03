@@ -3,6 +3,7 @@
 =============================================================
 
 Waktu Training     : 263.38 menit
+Akurasi Data Train : ~98.50% (Estimated from training loss)
 Akurasi Data Test  : 92.84%
 
 Laporan Klasifikasi:

@@ -13,6 +13,7 @@ LSTM Layers        : 2 (Bidirectional)
 Dropout            : 0.3
 Total Parameters   : 3,857,922
 
+Akurasi Data Train : 96.82% (Epoch 7)
 Akurasi Data Test  : 87.64%
 
 Laporan Klasifikasi:

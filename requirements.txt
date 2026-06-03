@@ -13,3 +13,5 @@ torch-directml
 transformers
 datasets
 tqdm
+streamlit>=1.30.0
+torchvision
