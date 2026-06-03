@@ -337,8 +337,13 @@ def load_lstm_model():
 def load_distilbert_model():
     try:
         from transformers import AutoTokenizer, AutoModelForSequenceClassification
-        tokenizer = AutoTokenizer.from_pretrained(str(BERT_MODEL_DIR))
-        model = AutoModelForSequenceClassification.from_pretrained(str(BERT_MODEL_DIR))
+        # Check if local model folder exists and contains configuration file
+        if BERT_MODEL_DIR.exists() and (BERT_MODEL_DIR / "config.json").exists():
+            model_path = str(BERT_MODEL_DIR)
+        else:
+            model_path = "lvwerra/distilbert-imdb"
+        tokenizer = AutoTokenizer.from_pretrained(model_path)
+        model = AutoModelForSequenceClassification.from_pretrained(model_path)
         model.eval()
         return model, tokenizer, None
     except Exception as e:
@@ -403,7 +408,13 @@ def predict_distilbert(text: str):
         logits = outputs.logits
         probs = torch.softmax(logits, dim=-1).numpy()[0]
         pred_enc = np.argmax(probs)
-        return classes_mapping[pred_enc], probs[pred_enc]
+        confidence = probs[pred_enc]
+        # Dynamic label mapping from config if available
+        if hasattr(bert_model, "config") and hasattr(bert_model.config, "id2label") and bert_model.config.id2label:
+            pred_label = bert_model.config.id2label[pred_enc].lower()
+        else:
+            pred_label = classes_mapping[pred_enc]
+        return pred_label, confidence
 
 
 # ============================================================
