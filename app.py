@@ -13,6 +13,8 @@ import torch.nn as nn
 import json
 import re
 import time
+import sys
+import traceback
 from pathlib import Path
 
 # Set page config with custom title and layout
@@ -297,16 +299,16 @@ def load_naive_bayes_model():
     try:
         data = joblib.load(NB_MODEL_PATH)
         return data["pipeline"], data.get("classes", ["negative", "positive"]), None
-    except Exception as e:
-        return None, None, str(e)
+    except Exception:
+        return None, None, traceback.format_exc()
 
 @st.cache_resource
 def load_logistic_regression_model():
     try:
         data = joblib.load(LR_MODEL_PATH)
         return data["pipeline"], data.get("classes", ["negative", "positive"]), None
-    except Exception as e:
-        return None, None, str(e)
+    except Exception:
+        return None, None, traceback.format_exc()
 
 @st.cache_resource
 def load_lstm_model():
@@ -330,8 +332,8 @@ def load_lstm_model():
         model.load_state_dict(checkpoint["model_state_dict"])
         model.eval()
         return model, vocab, None
-    except Exception as e:
-        return None, None, str(e)
+    except Exception:
+        return None, None, traceback.format_exc()
 
 @st.cache_resource
 def load_distilbert_model():
@@ -366,8 +368,8 @@ def load_distilbert_model():
         model = AutoModelForSequenceClassification.from_pretrained(model_path)
         model.eval()
         return model, tokenizer, None
-    except Exception as e:
-        return None, None, str(e)
+    except Exception:
+        return None, None, traceback.format_exc()
 
 
 # Load all models once
@@ -455,20 +457,36 @@ def get_status_html(name, model_obj, err):
         return f'<div {tooltip}><span class="dot dot-red"></span><b>{name}</b>: Gagal/Tidak Ditemukan</div>'
 
 st.sidebar.markdown(get_status_html("Naive Bayes", nb_pipeline, nb_err), unsafe_allow_html=True)
-if nb_err:
-    st.sidebar.caption(f"⚠️ NB: {nb_err}")
-
 st.sidebar.markdown(get_status_html("Logistic Regression", lr_pipeline, lr_err), unsafe_allow_html=True)
-if lr_err:
-    st.sidebar.caption(f"⚠️ LR: {lr_err}")
-
 st.sidebar.markdown(get_status_html("Bidirectional LSTM", lstm_model, lstm_err), unsafe_allow_html=True)
-if lstm_err:
-    st.sidebar.caption(f"⚠️ LSTM: {lstm_err}")
-
 st.sidebar.markdown(get_status_html("DistilBERT", bert_model, bert_err), unsafe_allow_html=True)
-if bert_err:
-    st.sidebar.caption(f"⚠️ DistilBERT: {bert_err}")
+
+# Diagnostics & traceback display if any error occurs
+if nb_err or lr_err or lstm_err or bert_err:
+    with st.sidebar.expander("🛠️ Diagnostics & Errors", expanded=True):
+        st.markdown(f"**Python:** `{sys.version.split()[0]}`")
+        st.markdown(f"**PyTorch:** `{torch.__version__}`")
+        st.markdown(f"**Working Dir:** `{Path.cwd().name}`")
+        st.markdown("**File Existence Checks:**")
+        st.markdown(f"- NB model: `{'✅' if NB_MODEL_PATH.exists() else '❌'}`")
+        st.markdown(f"- LR model: `{'✅' if LR_MODEL_PATH.exists() else '❌'}`")
+        st.markdown(f"- LSTM model: `{'✅' if LSTM_MODEL_PATH.exists() else '❌'}`")
+        st.markdown(f"- LSTM vocab: `{'✅' if LSTM_VOCAB_PATH.exists() else '❌'}`")
+        st.markdown(f"- BERT dir: `{'✅' if BERT_MODEL_DIR.exists() else '❌'}`")
+        st.markdown(f"- BERT config: `{'✅' if (BERT_MODEL_DIR / 'config.json').exists() else '❌'}`")
+        
+        if lstm_err:
+            st.error("LSTM Traceback:")
+            st.code(lstm_err, language="python")
+        if bert_err:
+            st.error("DistilBERT Traceback:")
+            st.code(bert_err, language="python")
+        if nb_err:
+            st.error("NB Traceback:")
+            st.code(nb_err, language="python")
+        if lr_err:
+            st.error("LR Traceback:")
+            st.code(lr_err, language="python")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### Keterangan Kelas")
