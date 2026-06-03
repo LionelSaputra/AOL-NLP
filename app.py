@@ -317,7 +317,7 @@ def load_lstm_model():
         vocab.word2idx = word2idx
         vocab.idx2word = {v: k for k, v in word2idx.items()}
         
-        checkpoint = torch.load(LSTM_MODEL_PATH, map_location="cpu")
+        checkpoint = torch.load(LSTM_MODEL_PATH, map_location="cpu", weights_only=False)
         model = LSTMClassifier(
             vocab_size=checkpoint["vocab_size"],
             embed_dim=checkpoint["embed_dim"],
@@ -455,9 +455,20 @@ def get_status_html(name, model_obj, err):
         return f'<div {tooltip}><span class="dot dot-red"></span><b>{name}</b>: Gagal/Tidak Ditemukan</div>'
 
 st.sidebar.markdown(get_status_html("Naive Bayes", nb_pipeline, nb_err), unsafe_allow_html=True)
+if nb_err:
+    st.sidebar.caption(f"⚠️ NB: {nb_err}")
+
 st.sidebar.markdown(get_status_html("Logistic Regression", lr_pipeline, lr_err), unsafe_allow_html=True)
+if lr_err:
+    st.sidebar.caption(f"⚠️ LR: {lr_err}")
+
 st.sidebar.markdown(get_status_html("Bidirectional LSTM", lstm_model, lstm_err), unsafe_allow_html=True)
+if lstm_err:
+    st.sidebar.caption(f"⚠️ LSTM: {lstm_err}")
+
 st.sidebar.markdown(get_status_html("DistilBERT", bert_model, bert_err), unsafe_allow_html=True)
+if bert_err:
+    st.sidebar.caption(f"⚠️ DistilBERT: {bert_err}")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### Keterangan Kelas")
